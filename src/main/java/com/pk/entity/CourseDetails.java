@@ -1,8 +1,6 @@
 package com.pk.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Positive;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +22,7 @@ public class CourseDetails {
     @Column(name = "course_id")
     private Integer id;
 
-    @Column(name = "course_name", length = 40)
+    @Column(name = "course_name", length = 100)
     private String courseName;
 
     @Column(name = "course_category")
@@ -42,9 +40,9 @@ public class CourseDetails {
     @Column(name = "location")
     private String location;
 
-    @DecimalMin("0.1")
-    @Positive @Column(name = "course_fees")
-    private Float courseFee;
+    //    @DecimalMin("0.1")
+    @Column(name = "course_fees")
+    private Integer courseFee;
 
     @Column(name = "mode")
     private String trainingMode;

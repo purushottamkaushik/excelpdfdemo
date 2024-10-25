@@ -12,7 +12,6 @@ import com.pk.repo.CourseRepository;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
-
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,8 +26,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import javax.naming.directory.SearchResult;
 
 @Service
 @Slf4j
@@ -88,70 +85,78 @@ public class CourseServiceImpl implements ICourseService {
     }
 
     @Override
-    public void generatePdfReport(SearchInputs searchInputs, HttpServletResponse httpServletResponse) {
+    public void generatePdfReport(SearchInputs searchInputs, HttpServletResponse httpServletResponse)
+            throws IOException {
         List<SearchOutputs> searchOutputs = showCoursesByFilters(searchInputs);
+        generatePdfReportFromData(searchOutputs, httpServletResponse);
     }
 
     @Override
     public void generateExcelReport(SearchInputs searchInputs, HttpServletResponse httpServletResponse)
             throws Exception {
         List<SearchOutputs> searchOutputs = showCoursesByFilters(searchInputs);
-        generateExcelReportFromData(searchOutputs,httpServletResponse);
-
+        generateExcelReportFromData(searchOutputs, httpServletResponse);
     }
 
-    private void generateExcelReportFromData(List<SearchOutputs> searchOutputs, HttpServletResponse httpServletResponse) throws IOException {
+    private void generateExcelReportFromData(List<SearchOutputs> searchOutputs, HttpServletResponse httpServletResponse)
+            throws IOException {
         if (Objects.nonNull(searchOutputs) && !searchOutputs.isEmpty()) {
+            try {
+                HSSFWorkbook workbook = new HSSFWorkbook();
+                HSSFSheet sheet = workbook.createSheet();
 
-            HSSFWorkbook workbook = new HSSFWorkbook();
-            HSSFSheet sheet = workbook.createSheet();
+                HSSFRow header = sheet.createRow(0);
+                header.createCell(0).setCellValue("id");
+                header.createCell(1).setCellValue("name");
+                header.createCell(2).setCellValue("category");
+                header.createCell(3).setCellValue("faculty");
+                header.createCell(4).setCellValue("status");
+                header.createCell(5).setCellValue("location");
+                header.createCell(6).setCellValue("fee");
+                header.createCell(7).setCellValue("Admin contact");
 
-            HSSFRow header = sheet.createRow(0);
-            header.getCell(0).setCellValue("id");
-            header.getCell(1).setCellValue("name");
-            header.getCell(2).setCellValue("category");
-            header.getCell(3).setCellValue("faculty");
-            header.getCell(4).setCellValue("status");
-            header.getCell(5).setCellValue("location");
-            header.getCell(6).setCellValue("fee");
-            header.getCell(7).setCellValue("Admin contact");
+                int i = 1;
+                for (SearchOutputs searchOutput : searchOutputs) {
+                    HSSFRow currentRow = sheet.createRow(i);
+                    currentRow.createCell(0).setCellValue(searchOutput.getId());
+                    currentRow.createCell(1).setCellValue(searchOutput.getCourseName());
+                    currentRow.createCell(2).setCellValue(searchOutput.getCourseCategory());
+                    currentRow.createCell(3).setCellValue(searchOutput.getFacultyName());
+                    currentRow.createCell(4).setCellValue(searchOutput.getCourseStatus());
+                    currentRow.createCell(5).setCellValue(searchOutput.getLocation());
+                    currentRow.createCell(6).setCellValue(searchOutput.getCourseFee());
+                    currentRow.createCell(7).setCellValue(searchOutput.getAdminContact());
+                    i++;
+                }
 
-            int i = 1;
-            for (SearchOutputs searchOutput : searchOutputs) {
-                HSSFRow currentRow = sheet.createRow(i);
-                currentRow.getCell(0).setCellValue(searchOutput.getId());
-                currentRow.getCell(1).setCellValue(searchOutput.getCourseName());
-                currentRow.getCell(2).setCellValue(searchOutput.getCourseCategory());
-                currentRow.getCell(3).setCellValue(searchOutput.getFacultyName());
-                currentRow.getCell(4).setCellValue(searchOutput.getCourseStatus());
-                currentRow.getCell(5).setCellValue(searchOutput.getLocation());
-                currentRow.getCell(6).setCellValue(searchOutput.getCourseFee());
-                currentRow.getCell(7).setCellValue(searchOutput.getAdminContact());
-                i++;
+                // get response output stream
+                ServletOutputStream outputStream = httpServletResponse.getOutputStream();
+                workbook.write(outputStream);
+                outputStream.close();
+                workbook.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            // get response output stream
-            ServletOutputStream outputStream = httpServletResponse.getOutputStream();
-            workbook.write(outputStream);
-            outputStream.close();
-            workbook.close();
         }
-
     }
 
     @Override
     public void generatePdfReport(HttpServletResponse httpServletResponse) throws Exception {
+        List<CourseDetails> courseDetails = courseRepository.findAll();
         List<SearchOutputs> searchOutputs = new ArrayList<>();
-        generatePdfReportFromData(searchOutputs,httpServletResponse);
-
+        for (CourseDetails courseDetail : courseDetails) {
+            SearchOutputs searchOutput = new SearchOutputs();
+            BeanUtils.copyProperties(courseDetail, searchOutput);
+            searchOutputs.add(searchOutput);
+        }
+        generatePdfReportFromData(searchOutputs, httpServletResponse);
     }
 
-    private void generatePdfReportFromData(List<SearchOutputs> searchOutputs,
-                                           HttpServletResponse httpServletResponse) throws IOException {
-
+    private void generatePdfReportFromData(List<SearchOutputs> searchOutputs, HttpServletResponse httpServletResponse)
+            throws IOException {
 
         Document document = new Document(PageSize.A4);
-        PdfWriter.getInstance(document,httpServletResponse.getOutputStream());
+        PdfWriter.getInstance(document, httpServletResponse.getOutputStream());
         document.open();
 
         // FOnt for Paragrapgh
@@ -164,7 +169,6 @@ public class CourseServiceImpl implements ICourseService {
         paragraph.setAlignment(Paragraph.ALIGN_CENTER);
         document.add(paragraph);
 
-
         // FOnt for Table
         PdfPTable table = new PdfPTable(4);
         table.setWidthPercentage(70.0f);
@@ -172,20 +176,18 @@ public class CourseServiceImpl implements ICourseService {
         table.setSpacingAfter(2.0f);
 
         PdfPCell cell = new PdfPCell();
-         cell.setBackgroundColor(Color.BLUE);
-         cell.setPadding(5f);
+        cell.setBackgroundColor(Color.BLUE);
+        cell.setPadding(5f);
 
-       Font cellFont = FontFactory.getFont(FontFactory.TIMES_ROMAN);
-       cell.setBackgroundColor(Color.GREEN);
+        Font cellFont = FontFactory.getFont(FontFactory.TIMES_ROMAN);
+        cell.setBackgroundColor(Color.GREEN);
 
-
-       cell.setPhrase(new Phrase("ID", cellFont));
-       table.addCell(cell);
-       cell.setPhrase(new Phrase("courseName", cellFont));
-       table.addCell(cell);
-       cell.setPhrase(new Phrase("faculty", cellFont));
-       table.addCell(cell);
-
+        cell.setPhrase(new Phrase("ID", cellFont));
+        table.addCell(cell);
+        cell.setPhrase(new Phrase("courseName", cellFont));
+        table.addCell(cell);
+        cell.setPhrase(new Phrase("faculty", cellFont));
+        table.addCell(cell);
 
         for (SearchOutputs output : searchOutputs) {
             table.addCell(String.valueOf(output.getId()));
@@ -209,5 +211,10 @@ public class CourseServiceImpl implements ICourseService {
         if (Objects.nonNull(searchOutputs) && !searchOutputs.isEmpty()) {
             generateExcelReportFromData(searchOutputs, httpServletResponse);
         }
+    }
+
+    @Override
+    public void saveCourse(CourseDetails course) {
+        courseRepository.save(course);
     }
 }

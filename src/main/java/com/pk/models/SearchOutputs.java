@@ -24,7 +24,7 @@ public class SearchOutputs {
 
     private String location;
 
-    private Float courseFee;
+    private Integer courseFee;
 
     private String trainingMode;
 

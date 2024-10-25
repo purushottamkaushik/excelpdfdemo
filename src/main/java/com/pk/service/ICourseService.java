@@ -1,5 +1,6 @@
 package com.pk.service;
 
+import com.pk.entity.CourseDetails;
 import com.pk.models.SearchInputs;
 import com.pk.models.SearchOutputs;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,11 +22,9 @@ public interface ICourseService {
     public void generateExcelReport(SearchInputs searchInputs, HttpServletResponse httpServletResponse)
             throws Exception;
 
-
     public void generatePdfReport(HttpServletResponse httpServletResponse) throws Exception;
 
-    public void generateExcelReport( HttpServletResponse httpServletResponse)
-            throws Exception;
+    public void generateExcelReport(HttpServletResponse httpServletResponse) throws Exception;
 
-
+    void saveCourse(CourseDetails course);
 }
